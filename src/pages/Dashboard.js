@@ -25,9 +25,10 @@ const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('assigned');
   const [loading, setLoading] = useState(true);
   const [userTasks, setUserTasks] = useState([]);
+  const [assignedTasks, setAssignedTasks] = useState([]);
   const [allTasks, setAllTasks] = useState([]);
   const [payments, setPayments] = useState([]);
 
@@ -50,8 +51,34 @@ const Dashboard = () => {
       setLoading(true);
       
       // Fetch tasks first
-      const tasksData = await ApiService.getAllTasks();
-      setAllTasks(tasksData || []);
+      const tasksResponse = await ApiService.getAllTasks();
+      const tasksData = Array.isArray(tasksResponse) ? tasksResponse : (tasksResponse?.data || []);
+      setAllTasks(tasksData);
+      
+      // Get current user info
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const currentUserId = user?.id || storedUser?.id;
+      const currentUserEmail = user?.email || storedUser?.email;
+      
+      // Filter user's posted tasks
+      const myPostedTasks = tasksData.filter(task => {
+        if (!task.user) return false;
+        const userIdMatch = task.user.id == currentUserId || task.user.id === currentUserId;
+        const emailMatch = task.user.email === currentUserEmail;
+        return userIdMatch || emailMatch;
+      });
+      
+      // Filter assigned tasks (tasks where current user is assigned)
+      const myAssignedTasks = tasksData.filter(task => {
+        return task.assignedTo && (
+          task.assignedTo.id == currentUserId || 
+          task.assignedTo.id === currentUserId ||
+          task.assignedTo.email === currentUserEmail
+        );
+      });
+      
+      setUserTasks(myPostedTasks);
+      setAssignedTasks(myAssignedTasks);
       
       // Try to fetch payments, but handle auth errors gracefully
       try {
@@ -62,27 +89,6 @@ const Dashboard = () => {
         setPayments([]); // Set empty array if payments can't be fetched
       }
       
-      // Get current user info from localStorage as backup
-      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const currentUserId = user?.id || storedUser?.id;
-      const currentUserEmail = user?.email || storedUser?.email;
-      
-      // Filter user's tasks using multiple criteria
-      const myTasks = (tasksData || []).filter(task => {
-        if (!task.user) return false;
-        
-        // Try multiple comparison methods
-        const userIdMatch = task.user.id == currentUserId || 
-                           task.user.id === currentUserId ||
-                           task.user.id === parseInt(currentUserId) ||
-                           task.user.id === String(currentUserId);
-        
-        const emailMatch = task.user.email === currentUserEmail;
-        
-        return userIdMatch || emailMatch;
-      });
-      
-      setUserTasks(myTasks);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Failed to load dashboard data');
@@ -122,22 +128,22 @@ const Dashboard = () => {
 
   const stats = [
     {
-      title: 'Total Tasks Posted',
+      title: 'Posted Tasks',
       value: userTasks.length,
       change: '+12% from last month',
       color: 'bg-blue-50 dark:bg-blue-900/20',
       icon: <Calendar className="h-6 w-6 text-blue-600" />
     },
     {
-      title: 'Active Tasks',
-      value: postedTasks.length,
+      title: 'Assigned Tasks',
+      value: assignedTasks.length,
       change: '+5% from last week',
       color: 'bg-green-50 dark:bg-green-900/20',
       icon: <Clock className="h-6 w-6 text-green-600" />
     },
     {
       title: 'Completed Tasks',
-      value: completedTasks.length,
+      value: completedTasks.length + assignedTasks.filter(t => t.status === 'completed').length,
       change: '+8% from last month',
       color: 'bg-purple-50 dark:bg-purple-900/20',
       icon: <CheckCircle className="h-6 w-6 text-purple-600" />
@@ -152,9 +158,8 @@ const Dashboard = () => {
   ];
 
   const tabs = [
-    { id: 'overview', name: 'Overview', count: null },
-    { id: 'posted', name: 'Posted Tasks', count: postedTasks.length },
-    { id: 'completed', name: 'Completed', count: completedTasks.length }
+    { id: 'assigned', name: 'Assigned Tasks', count: assignedTasks.length },
+    { id: 'posted', name: 'Posted Tasks', count: userTasks.length }
   ];
 
   if (!user) {
@@ -221,7 +226,7 @@ const Dashboard = () => {
         </div>
 
         {/* Tabs */}
-        <div className="mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-8">
           <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="-mb-px flex space-x-8 overflow-x-auto">
               {tabs.map((tab) => (
@@ -234,7 +239,16 @@ const Dashboard = () => {
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400'
                   }`}
                 >
-                  {tab.label}
+                  {tab.name}
+                  {tab.count !== null && (
+                    <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
+                      activeTab === tab.id
+                        ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/20'
+                        : 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-gray-300'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
                 </button>
               ))}
             </nav>
@@ -254,80 +268,24 @@ const Dashboard = () => {
             </div>
           ) : (
             <>
-              {activeTab === 'overview' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {/* Recent Posted Tasks */}
-                  <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Recent Posted Tasks
-                    </h3>
-                    {postedTasks.length === 0 ? (
-                      <p className="text-gray-500 dark:text-gray-400">No posted tasks yet</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {postedTasks.slice(0, 3).map((task) => (
-                          <div key={task.id} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <h4 className="font-medium text-gray-900 dark:text-white">{task.title}</h4>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{task.description}</p>
-                                <div className="flex items-center mt-2 space-x-4 text-sm text-gray-500">
-                                  <span className="flex items-center">
-                                    <DollarSign size={14} className="mr-1" />
-                                    ${task.budget}
-                                  </span>
-                                  <span className="flex items-center">
-                                    <MapPin size={14} className="mr-1" />
-                                    {task.location}
-                                  </span>
-                                </div>
-                              </div>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
-                                {task.status}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Recent Payments */}
-                  <div className="card p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Recent Transactions
-                    </h3>
-                    {payments.length === 0 ? (
-                      <p className="text-gray-500 dark:text-gray-400">No transactions yet</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {payments.slice(0, 5).map((payment) => (
-                          <div key={payment.id} className="flex justify-between items-center">
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">{payment.description}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {new Date(payment.createdAt).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className={`font-medium ${payment.type === 'DEPOSIT' ? 'text-green-600' : 'text-red-600'}`}>
-                                {payment.type === 'DEPOSIT' ? '+' : '-'}${payment.amount}
-                              </p>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentTypeColor(payment.type)}`}>
-                                {payment.type}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+              {activeTab === 'assigned' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {assignedTasks.length === 0 ? (
+                    <div className="col-span-full text-center py-12">
+                      <p className="text-gray-500 dark:text-gray-400">No assigned tasks yet</p>
+                      <p className="text-sm text-gray-400 mt-2">Tasks assigned to you will appear here</p>
+                    </div>
+                  ) : (
+                    assignedTasks.map((task) => (
+                      <TaskCard key={task.id} task={task} />
+                    ))
+                  )}
                 </div>
               )}
 
               {activeTab === 'posted' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {postedTasks.length === 0 ? (
+                  {userTasks.length === 0 ? (
                     <div className="col-span-full text-center py-12">
                       <p className="text-gray-500 dark:text-gray-400">No posted tasks yet</p>
                       <Button 
@@ -339,85 +297,9 @@ const Dashboard = () => {
                       </Button>
                     </div>
                   ) : (
-                    postedTasks.map((task) => (
+                    userTasks.map((task) => (
                       <TaskCard key={task.id} task={task} />
                     ))
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'completed' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {completedTasks.length === 0 ? (
-                    <div className="col-span-full text-center py-12">
-                      <p className="text-gray-500 dark:text-gray-400">No completed tasks yet</p>
-                    </div>
-                  ) : (
-                    completedTasks.map((task) => (
-                      <TaskCard key={task.id} task={task} />
-                    ))
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'payments' && (
-                <div className="card p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Payment History
-                  </h3>
-                  {payments.length === 0 ? (
-                    <p className="text-gray-500 dark:text-gray-400">No transactions yet</p>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                              Description
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                              Type
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                              Amount
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                              Date
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                              Status
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                          {payments.map((payment) => (
-                            <tr key={payment.id}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                {payment.description}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentTypeColor(payment.type)}`}>
-                                  {payment.type}
-                                </span>
-                              </td>
-                              <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                                payment.type === 'DEPOSIT' ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {payment.type === 'DEPOSIT' ? '+' : '-'}${payment.amount}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {new Date(payment.createdAt).toLocaleDateString()}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300">
-                                  {payment.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
                   )}
                 </div>
               )}

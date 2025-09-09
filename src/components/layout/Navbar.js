@@ -27,6 +27,7 @@ const Navbar = () => {
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
+    localStorage.setItem('language', lng);
     setShowLangMenu(false);
   };
 
@@ -45,7 +46,7 @@ const Navbar = () => {
             <Link to="/" className="flex-shrink-0">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="text-2xl font-bold bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent"
+                className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-transparent"
               >
                 PodiWedak.com
               </motion.div>
@@ -202,7 +203,7 @@ const Navbar = () => {
             ))}
             
             {!isAuthenticated && (
-              <div className="pt-4 pb-2 border-t border-gray-200 dark:border-gray-700 space-y-2">
+              <div className="pt-4 pb-2 border-t border-gray-200 dark:border-gray-700 space-y-4">
                 <Link to="/auth" onClick={() => setIsOpen(false)}>
                   <Button variant="outline" size="sm" className="w-full">
                     {t('auth.login')}

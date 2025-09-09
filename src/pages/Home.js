@@ -50,10 +50,10 @@ const Home = () => {
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6"
             >
               Get Things Done with
-              <span className="bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-orange-400 to-orange-500 bg-clip-text text-transparent">
                 {' '}PodiWedak.com
               </span>
             </motion.h1>
@@ -62,7 +62,7 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto"
+              className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto px-4"
             >
               Connect with skilled people in your community to get tasks done quickly and affordably
             </motion.p>
@@ -72,23 +72,41 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="max-w-2xl mx-auto mb-8"
+              className="max-w-4xl mx-auto mb-8 px-4"
             >
-              <div className="flex flex-col md:flex-row gap-4 p-2 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-                <div className="flex-1">
-                  <Input 
-                    placeholder={t('tasks.searchPlaceholder')}
-                    className="mb-0 border-0 shadow-none"
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center text-gray-500 dark:text-gray-400">
-                    <MapPin size={20} className="mr-2" />
-                    <span>Location</span>
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                <div className="flex flex-col sm:flex-row">
+                  {/* What field */}
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      placeholder="What do you need done?"
+                      className="w-full py-4 px-4 border-0 focus:outline-none text-gray-900 placeholder-gray-400 text-base sm:text-lg"
+                    />
                   </div>
-                  <Button variant="primary" size="lg">
-                    {t('common.search')}
-                  </Button>
+                  
+                  {/* Search button */}
+                  <div className="flex items-center border-t sm:border-t-0 sm:border-l border-gray-200">
+                    <button className="w-full sm:w-auto h-full px-6 sm:px-8 py-4 sm:py-0 bg-orange-400 text-white font-semibold hover:bg-orange-500 transition-colors flex items-center justify-center">
+                      <Search size={20} className="mr-2" />
+                      Search
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Popular categories */}
+              <div className="mt-6 text-center">
+                <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-4 text-sm">
+                  <span className="text-gray-600">Popular:</span>
+                  {['Cleaning', 'Handyman', 'Removalists', 'Gardening', 'Assembly'].map((category) => (
+                    <button
+                      key={category}
+                      className="text-gray-700 hover:text-orange-500 transition-colors font-medium text-xs sm:text-sm"
+                    >
+                      {category}
+                    </button>
+                  ))}
                 </div>
               </div>
             </motion.div>
@@ -189,26 +207,26 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-primary-500 to-secondary-500">
+      {/* Footer Section */}
+      <section className="py-16 bg-gradient-to-r from-orange-400 to-orange-500">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
             <h2 className="text-3xl font-bold text-white mb-4">
-              Ready to Get Started?
+              PodiWedak.com
             </h2>
-            <p className="text-xl text-white/90 mb-8">
-              Join thousands of people getting things done on PodiWedak.com
+            <p className="text-xl text-white mb-8">
+              Your trusted platform for getting things done
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="outline" size="lg" className="bg-white text-primary-600 hover:bg-gray-100">
-                Sign Up as Tasker
-              </Button>
-              <Button variant="ghost" size="lg" className="text-white border-white hover:bg-white/10">
-                Post Your First Task
-              </Button>
+            <div className="border-t border-white/20 pt-8">
+              <p className="text-white text-sm">
+                © 2024 PodiWedak.com. All rights reserved. | Privacy Policy | Terms of Service
+              </p>
+              <p className="text-white text-xs mt-2">
+                Connecting communities through trusted task services
+              </p>
             </div>
           </motion.div>
         </div>
