@@ -1,0 +1,48 @@
+{
+  "nav": {
+    "home": "Home",
+    "tasks": "Tasks",
+    "post": "Post Task",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "common": {
+    "loading": "Loading...",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "submit": "Submit"
+  },
+  "tasks": {
+    "searchPlaceholder": "Search tasks...",
+    "makeOffer": "Make Offer",
+    "viewDetails": "View Details",
+    "category": "Category",
+    "location": "Location",
+    "budget": "Budget",
+    "status": "Status",
+    "description": "Description",
+    "title": "Title"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "login": "Login",
+    "signInSubtitle": "Welcome back! Please sign in to your account",
+    "signUpSubtitle": "Create your account to get started",
+    "fullName": "Full Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "loginWithGoogle": "Login with Google",
+    "noAccount": "Don't have an account? Sign up",
+    "hasAccount": "Already have an account? Sign in"
+  }
+}
